@@ -711,9 +711,12 @@ http_format = "gelf"
 ```
 make test
 make build
+make static
 ```
 
 The binary is written under `build/$(GOOS)-$(GOARCH)/bin/logsurge`.
+`make static` writes `build/$(GOOS)-$(GOARCH)/bin/logsurge-static` with
+`CGO_ENABLED=0` plus pure Go DNS and user lookup tags.
 
 ## Performance Profiling
 

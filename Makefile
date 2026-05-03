@@ -6,6 +6,7 @@ PLATFORM := $(GOOS)-$(GOARCH)
 PLATFORM_BUILD_DIR := $(BUILD_DIR)/$(PLATFORM)
 BIN_DIR := $(PLATFORM_BUILD_DIR)/bin
 BIN := $(BIN_DIR)/$(APP)
+STATIC_BIN := $(BIN_DIR)/$(APP)-static
 PERF_DIR := $(PLATFORM_BUILD_DIR)/perf
 GO_SOURCES := $(wildcard *.go)
 GOCACHE := $(PLATFORM_BUILD_DIR)/gocache
@@ -25,11 +26,13 @@ export GOENV
 export GOFLAGS
 export GOTELEMETRY=off
 
-.PHONY: all build test perf perf-adhoc-smoke flood-smoke run install install-mutable clean
+.PHONY: all build static test perf perf-adhoc-smoke flood-smoke run install install-mutable clean
 
 all: build
 
 build: $(BIN)
+
+static: $(STATIC_BIN)
 
 test:
 	mkdir -p "$(GOCACHE)" "$(GOMODCACHE)" "$(GOPATH)" "$(GOTMPDIR)" "$(GOTELEMETRYDIR)"
@@ -84,6 +87,11 @@ flood-smoke: build
 $(BIN): go.mod $(GO_SOURCES)
 	mkdir -p "$(BIN_DIR)" "$(GOCACHE)" "$(GOMODCACHE)" "$(GOPATH)" "$(GOTMPDIR)" "$(GOTELEMETRYDIR)"
 	go build -trimpath -o "$(BIN)" .
+
+$(STATIC_BIN): go.mod $(GO_SOURCES)
+	mkdir -p "$(BIN_DIR)" "$(GOCACHE)" "$(GOMODCACHE)" "$(GOPATH)" "$(GOTMPDIR)" "$(GOTELEMETRYDIR)"
+	CGO_ENABLED=0 go build -trimpath -tags "netgo osusergo" -ldflags "-s -w -buildid=" -o "$(STATIC_BIN)" .
+	@echo "static binary: $(STATIC_BIN)"
 
 run: build
 	"$(BIN)" $(ARGS)
